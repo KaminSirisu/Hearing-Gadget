@@ -5,7 +5,7 @@ import Contact from "./pages/Contact.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import { BrowserRouter as Router, Routes, Route, createBrowserRouter, RouterProvider } from "react-router-dom";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
+import AdminDashboardPage, { loaderDashboard } from "./pages/admin/AdminDashboardPage.jsx";
 import AdminProductPage, { actionProducts, loaderProducts } from "./pages/admin/AdminProductPage.jsx";
 import AdminCategoriesPage, { actionCategories, loaderCategories } from "./pages/admin/AdminCategoriesPage.jsx";
 import AdminLayout from "./layouts/AdminLayout.jsx";
@@ -68,7 +68,8 @@ function App() {
       children: [
         {
           index: true,
-          element: <AdminDashboardPage />
+          element: <AdminDashboardPage />,
+          loader: loaderDashboard
         },
         {
           path: 'products',
