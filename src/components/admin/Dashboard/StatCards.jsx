@@ -4,22 +4,25 @@ import { Boxes, Tag, Users } from 'lucide-react';
 const StatCards = ({ data }) => {
     const cards = [
         {
-            icon: <Boxes className="w-6 h-6 text-blue-500" />,
+            icon: <Boxes size={25} />,
             label: 'Total Products',
             value: data.stats?.totalProducts ?? "-",
-            subtext: "All products in your store"
+            subtext: "All products in your store",
+            color: "bg-blue-100 text-blue-500"
         },
         {
-            icon: <Tag className="w-6 h-6 text-blue-500" />,
+            icon: <Tag size={25} />,
             label: 'Total Categories',
             value: data.stats?.totalCategories ?? "-",
-            subtext: "Product categories in your store"
+            subtext: "Product categories in your store",
+            color: "bg-green-100 text-green-500"
         },
         {
-            icon: <Users className="w-6 h-6 text-blue-500" />,
+            icon: <Users size={25} />,
             label: 'Website Visitors',
             value: data.analytics?.count ?? "-",
-            subtext: "Total visitors to your website"
+            subtext: "Total visitors to your website",
+            color: "bg-blue-100 text-blue-500"
         }
     ]
 
@@ -28,9 +31,10 @@ const StatCards = ({ data }) => {
             {cards.map((card, index) => (
                 <div key={index} className="bg-white rounded-lg shadow p-4">
                     <div className="flex items-center justify-between">
-                        <div className="bg-blue-50 p-2 rounded-lg">
+                        <div className={`${card.color} rounded-md p-2`}>
                             {card.icon}
                         </div>
+                        
                         <div className="text-right">
                             <p className="text-sm text-gray-500">{card.label}</p>
                             <p className="text-2xl font-bold mt-1">{card.value}</p>

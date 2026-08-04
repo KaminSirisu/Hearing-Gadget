@@ -3,7 +3,7 @@ import { formatRelativeTime } from '../../../utils/formatRelativeTime.js';
 
 const RecentlyUpdatedProducts = ({ recentProducts }) => {
     return (
-        <div className="p-5 bg-white rounded-lg shadow-md mt-5">
+        <div className="p-5 bg-white rounded-lg shadow-md">
             <span className="font-medium text-lg">Recently Updated Products</span>
             {recentProducts.map((product) => (
                 <div key={product.id} className="flex justify-between items-center mt-2">

@@ -28,16 +28,16 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg z-50 text-sm">
                         <Link
                             to="/admin/login"
-                            className="px-4 py-3 hover:bg-blue-100 flex gap-2 hover:text-blue-600 justify-center hover:rounded-lg"
+                            className="px-4 py-3 hover:bg-blue-100 flex gap-2 hover:text-blue-600 justify-center rounded-t-lg"
                         >
                             
-                            <BadgeCheck className=''/>
+                            <BadgeCheck />
                             ล็อคอินแอดมิน
                         </Link>
 
                         <Link
                             to="/user/login"
-                            className="flex gap-2 px-4 py-3 hover:bg-blue-100 justify-center hover:text-blue-600 hover:rounded-lg"
+                            className="flex gap-2 px-4 py-3 hover:bg-blue-100 justify-center hover:text-blue-600 rounded-b-lg"
                         >
                             <User />
                             ล็อคอินผู้ใช้
