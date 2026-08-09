@@ -7,17 +7,17 @@ const Navbar = () => {
   const [ openDropDown, setOpenDropDown ] = useState(false);
 
   return (
-    <div className="bg-white py-4">
-        <div className="justify-between flex items-center mx-20">
-            <div className='flex gap-2'>
+    <div className="bg-white max-w-6xl">
+        <div className="w-full justify-between flex items-center py-4 mx-30">
+            <div className='flex items-center gap-2'>
                 <Ear size={25} className="text-blue-600"/>
-                <Link to="/" className="font-bold text-xl">Hearing Gadget</Link>
+                <Link to="/" className="font-bold text-2xl tracking-wider">Hearing Gadget</Link>
             </div>
-            <div className="flex gap-15 text-sm">
-                <Link to="/" className="hover:text-blue-400">หน้าแรก</Link>
-                <Link to="/product" className="hover:text-blue-400">รายการสินค้า</Link>
-                <Link to="/about" className="hover:text-blue-400">เกี่ยวกับเรา</Link>
-                <Link to="/contact" className="hover:text-blue-400">ติดต่อ</Link>
+            <div className="flex gap-5 text-sm">
+                <Link to="/" className="hover:bg-gray-100 rounded-lg px-4 py-2">หน้าแรก</Link>
+                <Link to="/products" className="hover:bg-gray-100 rounded-lg px-4 py-2">รายการสินค้า</Link>
+                <Link to="/about" className="hover:bg-gray-100 rounded-lg px-4 py-2">เกี่ยวกับเรา</Link>
+                <Link to="/contact" className="hover:bg-gray-100 rounded-lg px-4 py-2">ติดต่อ</Link>
             </div>
             <div className='relative'>
                 <button onClick={() => setOpenDropDown(!openDropDown)}>

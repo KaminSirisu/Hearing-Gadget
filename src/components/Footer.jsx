@@ -5,7 +5,7 @@ import phoneCall from "../assets/phone-call.png";
 
 const Footer = () => {
   return (
-    <div className="">
+    <div className="border border-t-neutral-200">
         <div className='flex flex-col items-center gap-5 bg-white py-10'>
             <div className='flex flex-row gap-10 text-[#283d6c] text-sm'>
                 <div className='flex flex-col gap-1'>

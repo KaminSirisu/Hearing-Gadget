@@ -1,5 +1,6 @@
 import { supabase } from "../libs/supabase.js";
 import { slugify } from "../utils/slugify.js";
+import { getCategories } from "./categoryService.js";
 
 export async function getProducts() {
     const { data, error } = await supabase
@@ -80,5 +81,19 @@ export async function deleteProduct(id) {
         .eq("id", id);
 
     if (error) throw error;
+};
 
+export async function getProductsPageData() {
+    const [
+        products,
+        categories
+    ] = await Promise.all([
+        getProducts(),
+        getCategories()
+    ])
+
+    return {
+        products,
+        categories
+    }
 }

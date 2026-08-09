@@ -1,13 +1,19 @@
 import { Phone, Mail, MapPin, Send, Lock, Users, Shield, MapPinned, CalendarCheck } from 'lucide-react';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
+import { Link } from 'react-router-dom';
 
 const Contact = () => {
   return (
-    <div className="bg-gray-50 min-h-screen">
-
+    <div className="min-h-screen">
+      <p className="px-20 py-8">
+        <Link to="/" className="text-neutral-500">
+          Home&nbsp;{'>'}
+        </Link> <span className="font-medium">Contact</span>
+      </p>
       {/* Hero Contact Section */}
       <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+        
 
         {/* Left: Contact Form */}
         <div className="bg-white rounded-2xl shadow-sm p-8">

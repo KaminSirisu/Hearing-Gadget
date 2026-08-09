@@ -94,7 +94,7 @@ function ProductForm({ product, categories }) {
             method="post"
             encType="multipart/form-data"
             onSubmit={handleSubmit}
-            className="space-y-4"
+            className="space-y-4 max-h-[75vh] overflow-y-auto px-1 pr-2"
         >
             <input type="hidden" name="intent" value={product ? 'update' : 'create'} />
             {product && <input type="hidden" name="id" value={product.id} />}

@@ -1,5 +1,5 @@
 import Home from "./pages/Home.jsx";
-import Product from "./pages/Product.jsx";
+import Products, { loaderProductsPublic } from "./pages/Products.jsx";
 import AboutUs from "./pages/AboutUs.jsx";
 import Contact from "./pages/Contact.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
@@ -13,6 +13,15 @@ import AdminSettingPage, { actionSettings, loaderSettings } from "./pages/admin/
 import UserLayout from "./layouts/userLayout.jsx";
 import Error from "./pages/Error.jsx";
 import { Bounce, ToastContainer } from "react-toastify";
+import ProductDetail from "./pages/ProductDetail.jsx";
+
+function HydrateFallback() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <p>Loading...</p>
+    </div>
+  );
+}
 
 function App() {
   
@@ -21,14 +30,20 @@ function App() {
       path: '/',
       element: <UserLayout />,
       errorElement: <Error />,
+      HydrateFallback,
       children: [
         { 
           index: true,
           element: <Home />
         },
         {
-          path: 'product',
-          element: <Product />
+          path: 'products',
+          element: <Products />,
+          loader: loaderProductsPublic
+        },
+        {
+          path: 'products/:slug',
+          element: <ProductDetail />
         },
         {
           path: 'about',
@@ -65,6 +80,7 @@ function App() {
         </ProtectedRoute>
       ),
       errorElement: <Error />,
+      HydrateFallback,
       children: [
         {
           index: true,
