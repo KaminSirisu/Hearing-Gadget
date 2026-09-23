@@ -111,7 +111,7 @@ const Products = () => {
             
           </div>
           
-          <section className="mt-5">
+          <section className="my-5">
             <div className="max-w-7xl mx-auto">
               <FeatureBanner />
             </div>
