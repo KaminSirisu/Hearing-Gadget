@@ -10,7 +10,7 @@ import phoneCall from "./assets/phone-call.png";
 import shopee from "./assets/Shopee.png";
 import signia from "./assets/signia.png";
 import heroBanner from "./assets/hero_banner.png";
-import productBanner from "./assets/Product-Banner.png";
+import productBanner from "./assets/Product-Banner.jpg";
 
 
 export {
