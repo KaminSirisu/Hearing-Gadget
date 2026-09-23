@@ -13,7 +13,7 @@ import AdminSettingPage, { actionSettings, loaderSettings } from "./pages/admin/
 import UserLayout from "./layouts/userLayout.jsx";
 import Error from "./pages/Error.jsx";
 import { Bounce, ToastContainer } from "react-toastify";
-import ProductDetail from "./pages/ProductDetail.jsx";
+import ProductDetail, { loaderProductDetail } from "./pages/ProductDetail.jsx";
 
 function HydrateFallback() {
   return (
@@ -43,7 +43,8 @@ function App() {
         },
         {
           path: 'products/:slug',
-          element: <ProductDetail />
+          element: <ProductDetail />,
+          loader: loaderProductDetail
         },
         {
           path: 'about',

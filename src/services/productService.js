@@ -97,3 +97,22 @@ export async function getProductsPageData() {
         categories
     }
 }
+
+export async function getProductBySlug(slug) {
+    const { data, error } = await supabase
+        .from("products")
+        .select(`
+            *,
+            categories(name),
+            product_images(
+                image_path,
+                display_order
+            )
+        `)
+        .eq('slug', slug)
+        .single()
+
+    if (error) throw error;
+
+    return data;
+}
