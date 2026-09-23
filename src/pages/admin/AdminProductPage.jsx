@@ -62,7 +62,7 @@ const AdminProductPage = () => {
       key: 'name',
       header: 'Product Name',
       render: (product) => (
-        <span className="text-sm font-medium text-gray-800">{product.name}</span>
+        <span className="text-sm font-medium text-gray-800 w-50 block">{product.name}</span>
       ),
     },
     {
@@ -106,6 +106,24 @@ const AdminProductPage = () => {
       render: (product) => (
         
         <span className="text-sm text-gray-600">{product.categories?.name}</span>
+      ),
+    },
+    {
+      key: 'shopee_url',
+      header: 'Shopee URL',
+      render: (product) => (
+        <span className="block w-30 truncate text-sm text-gray-600" title={product.shopee_url}>
+          {product.shopee_url}
+        </span>
+      ),
+    },
+     {
+      key: 'lazada_url',
+      header: 'Lazada URL',
+      render: (product) => (
+        <span className="block w-30 truncate text-sm text-gray-600" title={product.shopee_url}>
+          {product.lazada_url}
+        </span>
       ),
     },
     {
@@ -266,6 +284,8 @@ export const actionProducts = async ({ request }) => {
     stock: formData.get('stock'),
     description: formData.get('description'),
     is_active: formData.getAll('is_active').includes('true'),
+    shopee_url: formData.get('shopee_url'),
+    lazada_url: formData.get('lazada_url')
   };
 
   // Create Product

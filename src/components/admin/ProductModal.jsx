@@ -19,7 +19,9 @@ function ProductForm({ product, categories }) {
         price: 0,
         stock: 0,
         description: '',
-        is_active: true
+        is_active: true,
+        shopee_url: '',
+        lazada_url: ''
     });
 
     useEffect(() => {
@@ -31,6 +33,8 @@ function ProductForm({ product, categories }) {
                 stock: product.stock ?? 0,
                 description: product.description || '',
                 is_active: product.is_active,
+                shopee_url: product.shopee_url || '',
+                lazada_url: product.lazada_url || ''
             });
             if (product.product_images?.length > 0) {
                 setPreviewImages(
@@ -46,7 +50,9 @@ function ProductForm({ product, categories }) {
                 price: 0, 
                 stock: 0, 
                 description: '', 
-                is_active: true 
+                is_active: true,
+                shopee_url: '',
+                lazada_url: ''
             });
             setPreviewImages([]);
         }
@@ -71,7 +77,9 @@ function ProductForm({ product, categories }) {
             price: 0,
             stock: 0,
             description: '',
-            is_active: true
+            is_active: true,
+            shopee_url: '',
+            lazada_url: ''
         });
         setPreviewImages([]);
     }
@@ -176,6 +184,32 @@ function ProductForm({ product, categories }) {
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="Enter product description"
+                />
+            </div>
+
+            {/* Shopee Link */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Shopee URL</label>
+                <input
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="text"
+                    name="shopee_url"
+                    value={formData.shopee_url}
+                    onChange={handleChange}
+                    placeholder="Enter Shopee URL"
+                />
+            </div>
+
+            {/* Lazada Link */}
+            <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Lazada URL</label>
+                <input
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="text"
+                    name="lazada_url"
+                    value={formData.lazada_url}
+                    onChange={handleChange}
+                    placeholder="Enter Lazada URL"
                 />
             </div>
             
