@@ -1,6 +1,4 @@
 import { Phone, Mail, MapPin, Send, Lock, Users, Shield, MapPinned, CalendarCheck } from 'lucide-react';
-import Navbar from '../components/Navbar.jsx';
-import Footer from '../components/Footer.jsx';
 import { Link } from 'react-router-dom';
 
 const Contact = () => {
@@ -16,8 +14,8 @@ const Contact = () => {
         
 
         {/* Left: Contact Form */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <p className="text-blue-600 text-xs font-semibold tracking-widest uppercase mb-3">ติดต่อเรา</p>
+        <div className="bg-white rounded-2xl shadow-sm p-8 border border-neutral-50">
+          <p className="text-[#283d6c] text-xs font-semibold tracking-widest uppercase mb-3">ติดต่อเรา</p>
           <h1 className="text-3xl font-bold text-gray-900 mb-3">เราพร้อมช่วยเหลือคุณ</h1>
           <p className="text-gray-500 text-sm mb-8">
             มีคำถามหรือต้องการความช่วยเหลือ? กรอกแบบฟอร์มด้านล่าง แล้วทีมงานของเราจะติดต่อกลับโดยเร็วที่สุด
@@ -61,7 +59,7 @@ const Contact = () => {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              className="w-full bg-[#283d6c] hover:bg-[#1a2a5a] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
             >
               <Send size={16} />
               ส่งข้อความ
@@ -75,43 +73,43 @@ const Contact = () => {
         </div>
 
         {/* Right: Get in Touch */}
-        <div className="bg-gray-50 rounded-2xl p-8">
+        <div className="bg-white shadow-sm rounded-2xl p-8 border border-neutral-50 h-120">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">ช่องทางการติดต่อ</h2>
           <p className="text-gray-500 text-sm mb-8">ติดต่อเราได้ผ่านช่องทางด้านล่างนี้</p>
 
           <div className="space-y-6">
             {/* Phone */}
             <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
-              <div className="bg-blue-50 rounded-full p-3 shrink-0">
-                <Phone size={18} className="text-blue-600" />
+              <div className="bg-[#283d6c] rounded-full p-3 shrink-0">
+                <Phone size={18} className="text-white" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">โทรศัพท์</p>
-                <p className="text-blue-600 font-semibold text-base">0856633099</p>
+                <p className=" font-semibold text-base">0856633099</p>
                 <p className="text-xs text-gray-400 mt-0.5">จันทร์ - ศุกร์ 9:00 - 16:30 น.</p>
               </div>
             </div>
 
             {/* Email */}
             <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
-              <div className="bg-blue-50 rounded-full p-3 shrink-0">
-                <Mail size={18} className="text-blue-600" />
+              <div className="bg-[#283d6c] rounded-full p-3 shrink-0">
+                <Mail size={18} className="text-white" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">อีเมล</p>
-                <p className="text-blue-600 font-semibold text-base">charoen239@gmail.com</p>
+                <p className="font-semibold text-base">charoen239@gmail.com</p>
                 <p className="text-xs text-gray-400 mt-0.5">เราตอบกลับภายใน 24 ชั่วโมง</p>
               </div>
             </div>
 
             {/* Location */}
             <div className="flex items-start gap-4">
-              <div className="bg-blue-50 rounded-full p-3 shrink-0">
-                <MapPin size={18} className="text-blue-600" />
+              <div className="bg-[#283d6c] rounded-full p-3 shrink-0">
+                <MapPin size={18} className="text-white" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">ที่ตั้ง</p>
-                <p className="text-blue-600 font-semibold text-base">48/175 ซอยนวมินทร์ 143 ถนนนวมินทร์ แขวงนวลจันทร์ เขตบึงกุ่ม กรุงเทพมหานคร</p>
+                <p className="font-semibold text-base">48/175 ซอยนวมินทร์ 143 ถนนนวมินทร์ แขวงนวลจันทร์ เขตบึงกุ่ม กรุงเทพมหานคร</p>
                 <p className="text-xs text-gray-400 mt-0.5">เข้าเยี่ยมชมได้โดยนัดหมายล่วงหน้า</p>
               </div>
             </div>
@@ -144,29 +142,10 @@ const Contact = () => {
           allowFullScreen
           loading="lazy"
         />
-
-        {/* Card overlay
-        <div className="absolute top-1/2 left-10 -translate-y-1/2 bg-white rounded-2xl shadow-lg p-6 w-64">
-          <div className="flex items-center gap-2 mb-3">
-            <MapPin size={18} className="text-blue-600" />
-            <p className="font-bold text-gray-900">Our Location</p>
-          </div>
-          <p className="text-sm text-gray-700 font-semibold">Hearing Gadget Co., Ltd.</p>
-          <p className="text-sm text-gray-500 mt-1">Nawamin, Bueng Kum</p>
-          <p className="text-sm text-gray-500">Bangkok 10240, Thailand</p>
-          <a
-            href="https://maps.app.goo.gl/KBzsTivygPEuY32v9"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-1 text-blue-600 text-sm font-medium hover:underline"
-          >
-            Get Directions →
-          </a>
-        </div> */}
       </div>
 
       {/* Features Strip */}
-      <div className="bg-blue-50 py-10">
+      <div className="bg-white py-10">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { icon: Users, title: 'ผู้เชี่ยวชาญพร้อมช่วย', desc: 'ทีมผู้เชี่ยวชาญของเราพร้อมให้คำปรึกษา' },
@@ -175,8 +154,8 @@ const Contact = () => {
             { icon: CalendarCheck, title: 'นัดหมายยืดหยุ่น', desc: 'เลือกเวลาที่สะดวกสำหรับคุณได้เลย' },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex items-start gap-3">
-              <div className="bg-blue-100 rounded-full p-2.5 shrink-0">
-                <Icon size={18} className="text-blue-600" />
+              <div className="bg-[#283d6c] rounded-full p-2.5 shrink-0">
+                <Icon size={18} className="text-white" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-800">{title}</p>
