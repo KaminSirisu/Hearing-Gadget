@@ -1,7 +1,20 @@
-import { Phone, Mail, MapPin, Send, Lock, Users, Shield, MapPinned, CalendarCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Phone, Mail, MapPin, Send, Lock, Users, Shield, MapPinned, CalendarCheck, BookOpenText, LoaderCircle } from 'lucide-react';
+import { useFetcher, Link } from 'react-router-dom';
+import { toast } from "react-toastify";
+import { useRef, useEffect } from 'react';
+import { sendContactMessage } from '../services/emailService.js';
 
 const Contact = () => {
+  const formRef = useRef(null);
+  const fetcher = useFetcher();
+  const isSubmitting = fetcher.state !== "idle";
+
+  useEffect(() => {
+    if (fetcher.data?.success && fetcher.state === "idle") {
+      formRef.current.reset();
+    }
+  }, [fetcher.data, fetcher.state]);
+
   return (
     <div className="min-h-screen">
       <p className="px-20 py-8">
@@ -21,14 +34,28 @@ const Contact = () => {
             มีคำถามหรือต้องการความช่วยเหลือ? กรอกแบบฟอร์มด้านล่าง แล้วทีมงานของเราจะติดต่อกลับโดยเร็วที่สุด
           </p>
 
-          <form className="space-y-4">
+          <fetcher.Form method="POST" ref={formRef} className="space-y-4">
+            {/* Title */}
+            <div className="flex items-center border border-gray-200 rounded-lg px-4 py-3 gap-3">
+              <BookOpenText size={16} className="text-gray-400 shrink-0" />
+              <input
+                type="text"
+                name="title"
+                placeholder="ชื่อหัวข้อ"
+                className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                required
+              />
+            </div>
+
             {/* Name */}
             <div className="flex items-center border border-gray-200 rounded-lg px-4 py-3 gap-3">
               <Users size={16} className="text-gray-400 shrink-0" />
               <input
                 type="text"
+                name="name"
                 placeholder="ชื่อของคุณ"
                 className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                required
               />
             </div>
 
@@ -37,8 +64,10 @@ const Contact = () => {
               <Mail size={16} className="text-gray-400 shrink-0" />
               <input
                 type="email"
+                name="email"
                 placeholder="อีเมล"
                 className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                required
               />
             </div>
 
@@ -48,23 +77,32 @@ const Contact = () => {
                 <Send size={16} className="text-gray-400 shrink-0 mt-0.5" />
                 <textarea
                   placeholder="ข้อความของคุณ"
+                  name="message"
                   rows={5}
                   maxLength={1000}
                   className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent resize-none"
+                  required
                 />
               </div>
-              <p className="text-right text-xs text-gray-400 mt-1">0 / 1000</p>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              className="w-full bg-[#283d6c] hover:bg-[#1a2a5a] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              className={`w-full bg-[#283d6c] hover:bg-[#1a2a5a] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              disabled={isSubmitting}
             >
-              <Send size={16} />
-              ส่งข้อความ
+              {isSubmitting ? (
+                <LoaderCircle size={16} className="animate-spin" />
+              ):(
+                <>
+                  <Send size={16} />
+                  ส่งข้อความ
+                </>
+              )}
+              
             </button>
-          </form>
+          </fetcher.Form>
 
           <p className="flex items-center gap-2 text-xs text-gray-400 mt-5">
             <Lock size={12} />
@@ -170,3 +208,19 @@ const Contact = () => {
 };
 
 export default Contact;
+
+export async function actionContact({ request }) {
+  const formData = await request.formData();
+  const { title, name, email, message } = Object.fromEntries(formData);
+
+  try {
+    await sendContactMessage({ title, name, email, message });
+    toast.success("ส่งข้อความสำเร็จ! ทางเราจะติดต่อกลับโดยเร็วที่สุด");
+  } catch (error) {
+    console.error("Message failed to send:", error);
+    toast.error("เกิดข้อผิดพลาดในการส่งข้อความ กรุณาลองอีกครั้ง");
+    return { success: false }; 
+  }
+
+  return { success: true };
+}

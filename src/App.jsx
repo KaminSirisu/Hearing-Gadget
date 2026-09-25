@@ -1,7 +1,7 @@
 import Home from "./pages/Home.jsx";
 import Products, { loaderProductsPublic } from "./pages/Products.jsx";
 import AboutUs from "./pages/AboutUs.jsx";
-import Contact from "./pages/Contact.jsx";
+import Contact, { actionContact } from "./pages/Contact.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import { BrowserRouter as Router, Routes, Route, createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -52,7 +52,8 @@ function App() {
         },
         {
           path: 'contact',
-          element: <Contact />
+          element: <Contact />,
+          action: actionContact
         },
         {
           path: 'admin/login',
@@ -64,19 +65,6 @@ function App() {
       path: '/admin',
       element: (
         <ProtectedRoute>
-          <ToastContainer 
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick={false}
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-            transition={Bounce}
-          />
           <AdminLayout />
         </ProtectedRoute>
       ),
@@ -110,6 +98,22 @@ function App() {
     }
   ])
   return (
+    <>
+      <ToastContainer 
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick={false}
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            transition={Bounce}
+      />
+      <RouterProvider router={router}/>
+    </>
     // <Router>
     //     <Routes>
     //       <Route path="/" element={<Home />} />
@@ -149,7 +153,6 @@ function App() {
     //     </Routes>
         
     // </Router>
-    <RouterProvider router={router} />
   )
 }
 
