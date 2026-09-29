@@ -17,11 +17,11 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen">
-      <p className="px-20 py-8">
+      {/* <p className="px-20 py-8">
         <Link to="/" className="text-neutral-500">
           Home&nbsp;{'>'}
         </Link> <span className="font-medium">Contact</span>
-      </p>
+      </p> */}
       {/* Hero Contact Section */}
       <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-8">
         
