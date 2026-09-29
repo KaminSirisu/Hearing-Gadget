@@ -4,12 +4,18 @@
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + Vite |
-| Styling | Tailwind CSS |
-| Routing | React Router v6 |
+| Frontend | React 19 + Vite 8 |
+| Styling | Tailwind CSS v4, Lato font (`@fontsource/lato`) |
+| Routing | React Router v7 (data router: `createBrowserRouter` + loaders/actions) |
 | Backend / DB | Supabase (PostgreSQL) |
 | Auth | Supabase Auth |
 | File Storage | Supabase Storage |
+| Email | EmailJS (`@emailjs/browser`) — contact form only |
+| Notifications | React Toastify |
+| Icons | lucide-react |
+| Package manager | pnpm |
+
+Architecture decisions are recorded in [`docs/adr/`](docs/adr/).
 
 ---
 
@@ -17,9 +23,11 @@
 
 ```
 main.jsx
-└── <AuthProvider>          ← wraps entire app, holds user session
-    └── <App />
-        └── <Router>
+└── <StrictMode>
+    └── <AuthProvider>              ← wraps entire app, holds user session
+        └── <App />
+            ├── <ToastContainer />  ← single instance, serves public + admin routes
+            └── <RouterProvider router={createBrowserRouter([...])} />
 ```
 
 `AuthProvider` calls `supabase.auth.getUser()` on mount and subscribes to `onAuthStateChange` — all routes can read `user` and `loading` via `useAuth()`.
@@ -28,18 +36,23 @@ main.jsx
 
 ## Routes
 
-```
-/                   → Home.jsx           (public)
-/product            → Product.jsx        (public)
-/about              → AboutUs.jsx        (public)
-/contact            → Contact.jsx        (public)
-/admin/login        → AdminLogin.jsx     (public)
+Both top-level routes set `errorElement: <Error />` and a route-level `HydrateFallback`.
 
-/admin              → ProtectedRoute
-                      └── AdminLayout    (Sidebar + AdminHeader + <Outlet>)
-    /admin          (index) → Dashboard.jsx
-    /admin/products         → Products.jsx
-    /admin/categories       → Categories.jsx
+```
+/                         → UserLayout         (Navbar + <Outlet> + Footer)
+    (index)               → Home.jsx
+    /products             → Products.jsx        loader: loaderProductsPublic
+    /products/:slug       → ProductDetail.jsx   loader: loaderProductDetail
+    /about                → AboutUs.jsx
+    /contact              → Contact.jsx         action: actionContact
+    /admin/login          → AdminLogin.jsx
+
+/admin                    → ProtectedRoute
+                            └── AdminLayout    (Sidebar + AdminHeader + <Outlet>)
+    (index)               → AdminDashboardPage   loader: loaderDashboard
+    /admin/products       → AdminProductPage     loader: loaderProducts    action: actionProducts
+    /admin/categories     → AdminCategoriesPage  loader: loaderCategories  action: actionCategories
+    /admin/setting        → AdminSettingPage     loader: loaderSettings    action: actionSettings
 ```
 
 ### Auth Guard — `ProtectedRoute`
@@ -54,94 +67,102 @@ useAuth()
 Login calls `supabase.auth.signInWithPassword({ email, password })` and navigates to `/admin` on success.
 Logout calls `supabase.auth.signOut()` and navigates to `/`.
 
+> **Known issue:** `ProtectedRoute` is a component guard, but route **loaders run before components render**. Visiting an admin URL while logged out runs its loader first; if that loader fails (e.g. `/admin/setting`), the `Error` page is shown instead of redirecting to login.
+
 ---
 
-## Admin Layout
+## Layouts
 
 ```
-AdminLayout
-├── <Sidebar />          ← nav links, logout button
-├── <AdminHeader />      ← user email display
-└── <main>
-    └── <Outlet />       ← page content rendered here
+UserLayout                   AdminLayout
+├── <Navbar />               ├── <Sidebar />          ← nav links, logout button
+├── <main>                   └── <div>
+│   └── <Outlet />               ├── <AdminHeader />  ← user email display
+└── <Footer />                   └── <main>
+                                     └── <Outlet />   ← page content rendered here
 ```
 
 ---
 
 ## Page Data Flow
 
-### Products (`/admin/products`)
+All data-driven pages follow the same pattern (see `CLAUDE.md` → Architecture Principles):
 
 ```
-Products.jsx
-│
-├── State
-│   ├── products[]         ← loaded from Supabase
-│   ├── categories[]       ← loaded from Supabase (for filter dropdown + modal select)
-│   ├── openModal (bool)
-│   └── selectedProduct    ← null = create, object = edit
-│
-├── On mount
-│   ├── loadProducts()  → productService.getProducts()
-│   └── loadCategories() → categoryService.getCategories()
-│
-├── <Table columns={...} data={products} />
-│   └── columns define: image, name, brand, category, price, actions
-│       └── Edit btn → setSelectedProduct(row) + setOpenModal(true)
-│       └── Delete btn → handleDelete(id) → productService.deleteProduct(id)
-│
-└── <ProductModal isOpen onClose product categories onSave />
-    └── onSave = handleCreateProduct()
-        ├── storageService.uploadProductImage(file)  → returns fileName
-        ├── productService.createProduct(fields)      → returns { id }
-        └── productImageService.createProductImage({ product_id, image_path })
+Route
+├── loaderX()   ← thin: calls one service function, returns its result
+│                  component reads it with useLoaderData()
+└── actionX()   ← reads request.formData(), calls services inside try/catch,
+                   shows a toast, returns a result (never lets errors escape)
 ```
 
-### Categories (`/admin/categories`)
+> Categories, Settings and Contact follow this action pattern. **`actionProducts` does not yet** — it has no try/catch or toast, so a failed save falls through to the `Error` page.
+
+- **Pages** (`src/pages/**`) export the route component plus colocated `loaderX` / `actionX`.
+- **Services** (`src/services/*.js`) own all I/O and **throw** on failure; they never catch.
+- **Components** render props only — no fetching.
+- Admin pages with several operations send a hidden `intent` field (`create` / `update` / `delete`) and branch on it inside the action.
+- After an action finishes, React Router **revalidates** (re-runs the loaders of all matched routes), so lists refresh without manual reloading.
+- Loading state (V1): one skeleton per page, driven by `useNavigation()`.
+
+### Admin Dashboard (`/admin`)
+
+`loaderDashboard` → `dashboardService.getDashboardData()`, which runs the independent queries concurrently with `Promise.all` and returns one flat object. Visitor stats/trend are **stubs** (`TODO: PostHog in V2`).
+
+### Admin Products (`/admin/products`)
 
 ```
-Categories.jsx
-│
-├── State
-│   ├── categories[]        ← loaded from Supabase
-│   ├── openModal (bool)
-│   └── selectedCategory    ← null = create, object = edit
-│
-├── Refs (useRef — no re-render on keystroke)
-│   ├── quickNameRef        ← input for Quick Add name
-│   └── quickDescRef        ← textarea for Quick Add description
-│
-├── On mount
-│   └── loadCategories() → categoryService.getCategories()
-│
-├── <Table columns={...} data={categories} />
-│   └── columns define: name (with icon), description, product count, actions
-│       └── Edit btn → setSelectedCategory(row) + setOpenModal(true)
-│
-├── Quick Add panel (right sidebar)
-│   └── handleQuickAdd(e) → reads quickNameRef.current.value
-│                         → categoryService.createCategories({ name, description })
-│                         → clears refs + reloads
-│
-└── <CategoryModal isOpen onClose category onSave />
-    └── onSave = handleSaveCategory() → categoryService.createCategories(data)
+actionProducts (intent)
+├── create → productService.createProduct(fields)           (slug = slugify(name))
+│            └── for each image: storageService.uploadProductImage(file)
+│                                → productImageService.createProductImage({ product_id, image_path })
+├── update → productService.updateProduct(id, fields)
+│            └── if new images uploaded: delete old files + rows, then upload/insert the new ones
+└── delete → delete image files from Storage → productImageService.deleteProductImage(id)
+             → productService.deleteProduct(id)
 ```
+
+### Contact form (`/contact`)
+
+See [ADR 0001](docs/adr/0001-contact-form-via-emailjs.md) for the full rationale.
+
+```
+<fetcher.Form method="POST">          ← useFetcher: not a navigation
+  title, name, email, message (required)
+        │
+        ▼
+actionContact
+├── try   → emailService.sendContactMessage({ title, name, email, message })
+│           → emailjs.send(serviceId, templateId, params, publicKey)
+│           → toast.success → return { success: true }
+└── catch → console.error(error) → toast.error → return { success: false }
+        │
+        ▼
+Contact.jsx useEffect: fetcher.state === 'idle' && fetcher.data?.success → form.reset()
+Button disabled + spinner while fetcher.state !== 'idle'
+```
+
+The EmailJS public key is bundled into the browser by design; abuse is limited by the template's fixed **To** address, EmailJS allowed origins and rate limits.
 
 ---
 
 ## Supabase Database Tables
+
+Columns listed are the ones the app reads/writes.
 
 ### `products`
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | auto-generated |
 | name | text | |
+| slug | text | generated from `name` by `slugify()` in `productService` |
 | category_id | uuid FK | → categories.id |
 | price | numeric | |
-| description | text | |
-| brand | text | |
 | stock | integer | |
+| description | text | |
 | is_active | boolean | |
+| shopee_url | text | |
+| lazada_url | text | |
 
 ### `categories`
 | Column | Type | Notes |
@@ -149,6 +170,8 @@ Categories.jsx
 | id | uuid PK | auto-generated |
 | name | text | |
 | description | text | |
+
+A category with products assigned cannot be deleted (`deleteCategories` checks `products(count)` first).
 
 ### `product_images`
 | Column | Type | Notes |
@@ -158,42 +181,76 @@ Categories.jsx
 | image_path | text | filename in Storage bucket |
 | display_order | integer | |
 
+### `settings`
+Single row, created with defaults by `loaderSettings` if missing.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| company_name, company_description | text | |
+| logo_url | text | path in `setting-assets` bucket |
+| phone, email, address | text | |
+| google_maps_url, facebook_url, line_url, instagram_url | text | nullable |
+
 ---
 
 ## Supabase Storage
 
-**Bucket:** `product-images`
-
-| Operation | Function | Notes |
+| Bucket | Used for | Functions |
 |---|---|---|
-| Upload | `uploadProductImage(file)` | filename = `{Date.now()}-{file.name}` |
-| Read URL | `getImageUrl(path)` | returns public URL |
+| `product-images` | product photos | `uploadProductImage(file)`, `deleteProductImageFromStorage(path)` |
+| `setting-assets` | company logo | `uploadCompanyLogo(file)`, `deleteCompanyLogoFromStorage(path)` |
+
+`getImageUrl(path, bucket = "product-images")` returns a public URL for either bucket.
 
 ---
 
 ## Service Layer
 
-All Supabase calls are isolated in `src/services/`. Pages never call `supabase` directly.
+All I/O lives in `src/services/`. Pages never call `supabase` or `emailjs` directly. Named async exports; failures are thrown, never returned.
 
 ```
 src/services/
 ├── productService.js
-│   ├── getProducts()          SELECT * with JOIN categories + product_images
-│   ├── createProduct(data)    INSERT → returns created row
-│   ├── updateProduct(id,data) UPDATE WHERE id
-│   └── deleteProduct(id)      DELETE WHERE id
+│   ├── getProducts()             SELECT with categories + product_images
+│   ├── getProduct(id)
+│   ├── getProductBySlug(slug)    used by /products/:slug
+│   ├── getProductsPageData()     Promise.all(products, categories) for /products
+│   ├── createProduct(data)       INSERT (adds slug) → returns created row
+│   ├── updateProduct(id, data)   UPDATE (re-generates slug)
+│   └── deleteProduct(id)
 │
 ├── categoryService.js
-│   ├── getCategories()        SELECT *
-│   └── createCategories(data) INSERT
+│   ├── getCategories()           SELECT *, products(count)
+│   ├── createCategories(data)
+│   ├── updateCategories(id, data)
+│   └── deleteCategories(id)      refuses if the category still has products
 │
-├── storageService.js
-│   ├── uploadProductImage(file) → Storage PUT → returns fileName
-│   └── getImageUrl(path)        → returns public URL string
+├── productImageService.js
+│   ├── getProductImage(productId)
+│   ├── createProductImage(data)
+│   ├── updateProductImage(productId, imagePath)
+│   └── deleteProductImage(productId)
 │
-└── productImageService.js
-    └── createProductImage(data) INSERT product_images → returns created row
+├── storageService.js             see Supabase Storage above
+│
+├── settingsService.js
+│   ├── getSettings()
+│   ├── createDefaultSettings()
+│   └── updateSettings(id, data)
+│
+├── dashboardService.js
+│   ├── getProductStats(), getCategoryStats(), getRecentProducts(), getWebsiteChecklist()
+│   ├── getWebsiteVisitorStats(), getVisitorTrend()   ← stubs, PostHog in V2
+│   └── getDashboardData()        orchestrator: Promise.all → one flat object
+│
+└── emailService.js
+    └── sendContactMessage({ title, name, email, message })   EmailJS send; throws on failure
 ```
+
+### Utils (`src/utils/`)
+
+Pure functions, one per file: `slugify`, `formatPrice`, `formatRelativeTime`, `calculateSetupProgress`.
 
 ---
 
@@ -253,9 +310,11 @@ src/components/admin/
 
 ```
 src/
-├── main.jsx                   entry, mounts AuthProvider
-├── App.jsx                    router + route definitions
+├── main.jsx                   entry: StrictMode + AuthProvider + fonts
+├── App.jsx                    ToastContainer + router + route definitions
 ├── index.css
+├── image.js
+├── assets/
 ├── libs/
 │   └── supabase.js            createClient (reads VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)
 ├── context/
@@ -263,32 +322,32 @@ src/
 ├── routes/
 │   └── ProtectedRoute.jsx     auth guard
 ├── layouts/
+│   ├── UserLayout.jsx         Navbar + Outlet + Footer
 │   └── AdminLayout.jsx        Sidebar + Header + Outlet
 ├── pages/
 │   ├── Home.jsx
-│   ├── Product.jsx
+│   ├── Products.jsx           + loaderProductsPublic
+│   ├── ProductDetail.jsx      + loaderProductDetail
 │   ├── AboutUs.jsx
-│   ├── Contact.jsx
+│   ├── Contact.jsx            + actionContact
 │   ├── AdminLogin.jsx
+│   ├── Error.jsx
 │   └── admin/
-│       ├── Dashboard.jsx
-│       ├── Products.jsx
-│       └── Categories.jsx
+│       ├── AdminDashboardPage.jsx
+│       ├── AdminProductPage.jsx
+│       ├── AdminCategoriesPage.jsx
+│       └── AdminSettingPage.jsx
 ├── components/
-│   ├── Modal.jsx              portal + ModalContext
-│   ├── Table.jsx              reusable data table
-│   ├── Navbar.jsx
-│   ├── Footer.jsx
+│   ├── Modal.jsx, Table.jsx, Navbar.jsx, Footer.jsx, HorizontalLine.jsx, VerticalLine.jsx
+│   ├── Products/              public product listing (grid, card, filters, toolbar, skeleton, banners)
 │   └── admin/
-│       ├── Sidebar.jsx
-│       ├── AdminHeader.jsx
-│       ├── ProductModal.jsx
-│       └── CategoryModal.jsx
-└── services/
-    ├── productService.js
-    ├── categoryService.js
-    ├── storageService.js
-    └── productImageService.js
+│       ├── Sidebar.jsx, AdminHeader.jsx, ProductModal.jsx, CategoryModal.jsx
+│       ├── Dashboard/         stat cards, checklist, recent products, trend chart, skeleton
+│       └── SettingForms/      company, contact, social forms
+├── services/                  see Service Layer
+└── utils/                     see Utils
+
+docs/adr/                      architecture decision records
 ```
 
 ---
@@ -298,4 +357,9 @@ src/
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
+VITE_EMAILJS_SERVICE_ID=
+VITE_EMAILJS_TEMPLATE_ID=
+VITE_EMAILJS_PUBLIC_KEY=
 ```
+
+All `VITE_` variables are inlined into the browser bundle at **build time** — they are configuration, not secrets. On the hosting platform they must be set in its environment settings and the site rebuilt.
