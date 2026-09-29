@@ -59,6 +59,12 @@ function ProductForm({ product, categories }) {
         
     }, [product]);
 
+    useEffect(() => {
+        if (fetcher.state === 'idle' && fetcher.data?.success) {
+            onClose();
+        }
+    }, [fetcher.state, fetcher.data, onClose]);
+
     function handleChange(e) {
         const { name, value, type, checked } = e.target;
 
@@ -66,22 +72,6 @@ function ProductForm({ product, categories }) {
             ...prev, 
             [name]: type === 'checkbox' ? checked : value 
         }));
-    }
-
-    function handleSubmit() {
-        onClose();
-
-        setFormData({
-            name: '',
-            category_id: '',
-            price: 0,
-            stock: 0,
-            description: '',
-            is_active: true,
-            shopee_url: '',
-            lazada_url: ''
-        });
-        setPreviewImages([]);
     }
 
     function handleImageChange(e) {
@@ -101,7 +91,6 @@ function ProductForm({ product, categories }) {
         <fetcher.Form
             method="post"
             encType="multipart/form-data"
-            onSubmit={handleSubmit}
             className="space-y-4 max-h-[75vh] overflow-y-auto px-1 pr-2"
         >
             <input type="hidden" name="intent" value={product ? 'update' : 'create'} />

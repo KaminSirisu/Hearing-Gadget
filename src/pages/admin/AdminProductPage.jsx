@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Edit, Trash, Plus, Search, RotateCcw } from 'lucide-react';
 import { useFetcher, useLoaderData } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Modal from '../../components/Modal.jsx';
 import ProductModal from '../../components/admin/ProductModal.jsx';
 import Table from '../../components/Table.jsx';
 import { getProducts, getProduct, createProduct, updateProduct, deleteProduct } from '../../services/productService.js';
 import { getCategories } from '../../services/categoryService.js';
 import { uploadProductImage, getImageUrl, deleteProductImageFromStorage } from '../../services/storageService.js';
-import { createProductImage, updateProductImage, deleteProductImage } from '../../services/productImageService.js';
+import { createProductImage, deleteProductImage } from '../../services/productImageService.js';
 
 const AdminProductPage = () => {
   const [ openModal, setOpenModal ] = useState(false);
@@ -263,17 +264,22 @@ export const actionProducts = async ({ request }) => {
   // Delete Product
   if (intent === 'delete') {
     const productId = formData.get('id');
-    const product = await getProduct(productId);
-
-    if (product.product_images?.length > 0) {
-      for (const img of product.product_images) {
-        await deleteProductImageFromStorage(img.image_path);
+    try {
+      const product = await getProduct(productId);
+      if (product.product_images?.length > 0) {
+        for (const img of product.product_images) {
+          await deleteProductImageFromStorage(img.image_path);
+        }
+        await deleteProductImage(productId);
       }
-      await deleteProductImage(productId);
+      await deleteProduct(productId);
+      toast.success('Product deleted successfully!');
+      return { success: true };
+    } catch (error) {
+      console.error("Delete product failed:", error);
+      toast.error('Failed to delete product. Please try again.');
+      return { success: false };
     }
-
-    await deleteProduct(productId);
-    return null;
   }
 
   const images = formData.getAll('images');
@@ -290,55 +296,77 @@ export const actionProducts = async ({ request }) => {
 
   // Create Product
   if (intent === 'create') {
-    const createdProduct = await createProduct(product);
+    let createdProduct = null;
+    try {
+      createdProduct = await createProduct(product);
+      for (const [index, image] of images.entries()) {
+        if (image instanceof File && image.size > 0) {
+          const imagePath = await uploadProductImage(image);
 
-    for (const [index, image] of images.entries()) {
-      if (image instanceof File && image.size > 0) {
-        const imagePath = await uploadProductImage(image);
-
-        await createProductImage({
-          product_id: createdProduct.id,
-          image_path: imagePath,
-          display_order: index + 1,
-        });
+          await createProductImage({
+            product_id: createdProduct.id,
+            image_path: imagePath,
+            display_order: index + 1,
+          });
+        }
       }
-    }
-    
+      toast.success("Product created successfully!");
+      return { success: true };
+    } catch (error) {
+      console.error("Create product failed:", error);
 
-    return null;
+      // Product row exists → only images failed
+      if (createdProduct) {
+        toast.warning('Product saved, but some images failed to upload. Edit the product to re-upload them.');
+        return { success: true };
+      }
+      toast.error('Failed to create product. Please try again.');
+      return { success: false };
+    }
   }
 
   // Update Product
   if (intent === 'update') {
     const id = formData.get('id');
-    await updateProduct(id, product);
+    let updated = null;
+    try {
+      updated = await updateProduct(id, product);
+      const validImages = images.filter(
+        (image) => image instanceof File && image.size > 0
+      )
 
-    const validImages = images.filter(
-      (image) => image instanceof File && image.size > 0
-    )
+      if (validImages.length > 0) {
+        const oldImagePaths = formData.getAll('old_image_paths');
 
-    if (validImages.length > 0) {
-      const oldImagePaths = formData.getAll('old_image_paths');
-
-      if (oldImagePaths.length > 0) {
-        for (const path of oldImagePaths) {
-          await deleteProductImageFromStorage(path);
+        if (oldImagePaths.length > 0) {
+          for (const path of oldImagePaths) {
+            await deleteProductImageFromStorage(path);
+          }
+          await deleteProductImage(id);
         }
-        await deleteProductImage(id);
-      }
 
-      for (const [index, image] of validImages.entries()) {
-        const imagePath = await uploadProductImage(image);
+        for (const [index, image] of validImages.entries()) {
+          const imagePath = await uploadProductImage(image);
 
-        await createProductImage({
-          product_id: id,
-          image_path: imagePath,
-          display_order: index + 1,
-        });
+          await createProductImage({
+            product_id: id,
+            image_path: imagePath,
+            display_order: index + 1,
+          });
+        }
       }
+      toast.success("Updated Product successfully!");
+      return { success: true };
+    } catch (error) {
+      console.error("Update product failed:", error);
+
+      if (updated) {
+        toast.warning('Product updated, but some images failed to upload. Edit the product to re-upload them.');
+        return { success: true };
+      }
+      toast.error("Failed to update product. Please try again.");
+      return { success: false };
     }
-
-    return null;
   }
 
   throw new Response('Invalid product action', { status: 400 });
