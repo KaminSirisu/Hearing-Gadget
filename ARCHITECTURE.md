@@ -96,7 +96,7 @@ Route
                    shows a toast, returns a result (never lets errors escape)
 ```
 
-> Categories, Settings and Contact follow this action pattern. **`actionProducts` does not yet** — it has no try/catch or toast, so a failed save falls through to the `Error` page.
+> Products, Categories, Settings and Contact all follow this action pattern. Forms that submit through a fetcher (the product modal, the contact form) react to `fetcher.data.success`: the modal closes / the form resets only on success, so a failed save keeps the user's input.
 
 - **Pages** (`src/pages/**`) export the route component plus colocated `loaderX` / `actionX`.
 - **Services** (`src/services/*.js`) own all I/O and **throw** on failure; they never catch.
@@ -121,6 +121,18 @@ actionProducts (intent)
 └── delete → delete image files from Storage → productImageService.deleteProductImage(id)
              → productService.deleteProduct(id)
 ```
+
+Each branch has its own `try/catch` and returns `{ success }`. Storage and the database can't share a transaction, so a failure part-way is not rolled back (V1 decision):
+
+| Failure | Toast | Returns | Why |
+|---|---|---|---|
+| `create`: product insert fails | error | `false` | nothing saved; retry is safe |
+| `create`: product saved, images fail | warning ("Edit to re-upload") | `true` | closes the modal — retrying would create a duplicate |
+| `update`: product update fails | error | `false` | nothing changed |
+| `update`: fields saved, images fail | warning ("Edit to re-upload") | `true` | consistent with `create` |
+| `delete` fails | error ("try again") | `false` | retrying delete is idempotent |
+
+V2 option: upload files first, then insert rows in a Postgres function (RPC) so the database part is one transaction.
 
 ### Contact form (`/contact`)
 
